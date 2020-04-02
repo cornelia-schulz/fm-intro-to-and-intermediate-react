@@ -1,22 +1,30 @@
 import React from 'react';
-import pet from '@frontendmasters/pet';
+import pet, { Photo } from '@frontendmasters/pet';
 import Carousel from './Carousel';
 import ErrorBoundary from './ErrorBoundary';
 import ThemeContext from './ThemeContext';
-import { navigate } from '@reach/router';
+import { navigate, RouteComponentProps } from '@reach/router';
 import Modal from './Modal';
 
-class Details extends React.Component {
-  // constructor(props){
-  //   super(props)
-  //   this.state = {
-  //     loading: true
-  //   }
-  // }
-  state = { loading: true, showModal: false };
+class Details extends React.Component<RouteComponentProps<{id: string}>> {
+  public state = { 
+    loading: true,
+    showModal: false,
+    url: '',
+    name: '',
+    animal: '',
+    breed: '',
+    location: '',
+    description: '',
+    media: [] as Photo[]
+  };
 
-  componentDidMount() {
-    pet.animal(this.props.id)
+  public componentDidMount() {
+    if (!this.props.id) {
+      navigate('/');
+      return;
+    }
+    pet.animal(+this.props.id)
       .then(({animal}) => {
         this.setState({
           url: animal.url,
@@ -27,8 +35,9 @@ class Details extends React.Component {
           media: animal.photos,
           breed: animal.breeds.primary,
           loading: false
-        })
-      }, console.error)
+        });
+      })
+      .catch((err: Error) => this.setState({ error: err }));
   }
 
   toggleModal = () => {
@@ -49,10 +58,10 @@ class Details extends React.Component {
           <h1>{name}</h1>
           <h2>{`${animal} - ${breed} - ${location}`}</h2>
           <ThemeContext.Consumer>
-            {(themeHook) => (
+            {([theme]) => (
               <button
                 onClick={this.toggleModal}
-                style={{backgroundColor: themeHook[0]}}
+                style={{backgroundColor: theme}}
               >
                 Adopt {name}
               </button>
@@ -77,7 +86,7 @@ class Details extends React.Component {
   }
 }
 
-export default function DetailsWithErrorBoundary(props) {
+export default function DetailsWithErrorBoundary(props: RouteComponentProps<{id: string}>) {
   return (
     <ErrorBoundary>
       <Details {...props} />
